@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 type Slide = { src: string; title: string; subtitle: string };
@@ -34,65 +34,123 @@ export default function Carousel() {
     [],
   );
 
-  const [index, setIndex] = useState(0);
+  // We render slides + 1 clone (first slide at the end)
+  const trackSlides = useMemo(() => {
+    if (slides.length === 0) return [];
+    return [...slides, slides[0]];
+  }, [slides]);
 
+  const [index, setIndex] = useState(0);
+  const [animate, setAnimate] = useState(true);
+  const intervalRef = useRef<number | null>(null);
+
+  // Auto-play
   useEffect(() => {
-    const id = setInterval(() => {
-      setIndex((i) => (i + 1) % slides.length);
+    if (slides.length <= 1) return;
+
+    intervalRef.current = window.setInterval(() => {
+      setIndex((i) => i + 1);
     }, 4500);
-    return () => clearInterval(id);
+
+    return () => {
+      if (intervalRef.current) window.clearInterval(intervalRef.current);
+    };
   }, [slides.length]);
 
-  const active = slides[index];
+  // When we reach the clone slide, snap back to real first slide (no animation)
+  useEffect(() => {
+    if (slides.length === 0) return;
+
+    // When index === slides.length, we're on the CLONE (last item in trackSlides)
+    if (index === slides.length) {
+      const timeout = window.setTimeout(() => {
+        setAnimate(false); // turn off animation
+        setIndex(0); // snap back to real first slide
+      }, 700); // must match transition duration
+
+      return () => window.clearTimeout(timeout);
+    }
+
+    // for all normal moves, keep animation on
+    setAnimate(true);
+  }, [index, slides.length]);
+
+  // Dot clicking (keep within real slides range)
+  const goTo = (i: number) => {
+    setAnimate(true);
+    setIndex(i);
+  };
 
   return (
-    <section className="bg-gradient-to-b from-green-50 to-white">
-      <div className="mx-auto max-w-6xl px-4 pt-6">
-        <div className="relative overflow-hidden rounded-2xl border border-green-100 bg-white shadow-sm">
-          <img
-            src={active.src}
-            alt={active.title}
-            className="h-[220px] w-full object-cover sm:h-[300px]"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-green-900/70 via-green-900/30 to-transparent" />
-          <div className="absolute left-5 top-1/2 -translate-y-1/2 text-white max-w-lg">
-            <p className="text-xs font-bold uppercase tracking-widest text-green-100">
-              BCAS • Saskatchewan
-            </p>
-            <h2 className="mt-2 text-2xl sm:text-3xl font-extrabold">
-              {active.title}
-            </h2>
-            <p className="mt-2 text-sm text-green-50">{active.subtitle}</p>
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              <Link
-                to="/events"
-                className="rounded-full bg-white px-4 py-2 text-sm font-extrabold text-green-800 hover:bg-green-50"
-              >
-                View events
-              </Link>
-              <Link
-                to="/membership"
-                className="rounded-full border border-white/60 px-4 py-2 text-sm font-bold hover:bg-white/10"
-              >
-                Membership
-              </Link>
-            </div>
-          </div>
-
-          {/* Dots */}
-          <div className="absolute bottom-3 right-4 flex gap-2">
-            {slides.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setIndex(i)}
-                className={`h-2.5 w-2.5 rounded-full transition ${
-                  i === index ? "bg-white" : "bg-white/40 hover:bg-white/70"
-                }`}
-                aria-label={`Go to slide ${i + 1}`}
+    <section className="w-full">
+      <div className="relative w-full overflow-hidden">
+        {/* SLIDES TRACK */}
+        <div
+          className={`flex ${animate ? "transition-transform duration-700 ease-in-out" : ""}`}
+          style={{
+            transform: `translateX(-${index * 100}%)`,
+          }}
+        >
+          {trackSlides.map((slide, i) => (
+            <div key={i} className="relative min-w-full">
+              <img
+                src={slide.src}
+                alt={slide.title}
+                className="w-full h-[420px] sm:h-[520px] lg:h-[600px] object-cover"
               />
-            ))}
-          </div>
+
+              <div className="absolute inset-0 bg-gradient-to-r from-green-950/70 via-green-950/30 to-transparent" />
+
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full px-6">
+                  <div className="max-w-2xl text-white">
+                    <p className="text-xs font-extrabold uppercase tracking-widest text-green-100">
+                      BCAS • Saskatchewan
+                    </p>
+
+                    <h2 className="mt-3 text-3xl sm:text-4xl lg:text-5xl font-extrabold">
+                      {slide.title}
+                    </h2>
+
+                    <p className="mt-3 text-sm sm:text-base text-green-50">
+                      {slide.subtitle}
+                    </p>
+
+                    <div className="mt-6 flex flex-wrap gap-3">
+                      <Link
+                        to="/events"
+                        className="rounded-full bg-white px-5 py-3 text-sm font-extrabold text-green-900 hover:bg-green-50"
+                      >
+                        View events
+                      </Link>
+                      <Link
+                        to="/membership"
+                        className="rounded-full border border-white/60 px-5 py-3 text-sm font-extrabold hover:bg-white/10"
+                      >
+                        Membership
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* DOTS (only real slides, not the clone) */}
+        <div className="absolute bottom-5 right-6 flex gap-2">
+          {slides.map((_, i) => (
+            <button
+              key={i}
+              onClick={() => goTo(i)}
+              className={`h-2.5 w-2.5 rounded-full transition ${
+                index % slides.length === i
+                  ? "bg-white"
+                  : "bg-white/40 hover:bg-white/70"
+              }`}
+              aria-label={`Go to slide ${i + 1}`}
+            />
+          ))}
         </div>
       </div>
     </section>
