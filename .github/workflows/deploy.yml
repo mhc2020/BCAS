@@ -37,7 +37,7 @@ jobs:
             
             # Restart PM2 process
             echo "Restarting PM2 process: bcas"
-            pm2 reload bcas || pm2 start npm --name "bcas" -- run start
+            npx pm2 reload bcas || npx pm2 start npm --name "bcas" -- run preview
             
             # Log deployment completion
             echo "Production Deployment Completed"
