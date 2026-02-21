@@ -1,20 +1,30 @@
-import { useMemo, useState } from "react";
-
-type SendTo = "president" | "general_secretary";
+import { useState } from "react";
 
 export default function EnquirySection() {
-  const recipients = useMemo(
-    () => [
-      { value: "president" as const, label: "President" },
-      { value: "general_secretary" as const, label: "General Secretary" },
-    ],
-    [],
-  );
-
-  const [sendTo, setSendTo] = useState<SendTo>("president");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+
+  const [result, setResult] = useState("");
+  async function sendButton(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setResult("Sending....");
+    const formData = new FormData(event.currentTarget);
+    formData.append("access_key", "aefcf507-8b87-4580-8aa3-64ab6de11223");
+
+    const response = await fetch("https://api.web3forms.com/submit", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await response.json();
+    if (data.success) {
+      setResult("Message was Sent Successfully");
+      event.currentTarget.reset();
+    } else {
+      setResult("Error");
+    }
+  }
 
   return (
     <section className="w-full pb-12">
@@ -41,34 +51,13 @@ export default function EnquirySection() {
           {/* Right: form */}
           <form
             className="space-y-3"
-            onSubmit={(e) => {
-              e.preventDefault();
-
-              if (!name.trim() || !email.trim() || !message.trim()) {
-                alert("Please fill in Name, Email, and Message.");
-                return;
-              }
-
-              // UI-only demo:
-              const recipientLabel =
-                recipients.find((r) => r.value === sendTo)?.label ??
-                "Recipient";
-
-              alert(
-                `Submitted (UI only)\n\nSend to: ${recipientLabel}\nName: ${name}\nEmail: ${email}\nMessage: ${message}`,
-              );
-
-              // reset
-              setName("");
-              setEmail("");
-              setMessage("");
-              setSendTo("president");
-            }}
+            onSubmit={sendButton}
           >
             <div>
               <label className="text-sm font-bold text-slate-700">Name</label>
               <input
                 value={name}
+                name="name"
                 onChange={(e) => setName(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-200"
                 placeholder="Your name"
@@ -79,29 +68,14 @@ export default function EnquirySection() {
               <label className="text-sm font-bold text-slate-700">Email</label>
               <input
                 type="email"
+                name="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-200"
                 placeholder="you@example.com"
               />
             </div>
-            <div>
-              <label className="text-sm font-bold text-slate-700">
-                Send to
-              </label>
-              <select
-                value={sendTo}
-                onChange={(e) => setSendTo(e.target.value as SendTo)}
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-200"
-              >
-                {recipients.map((r) => (
-                  <option key={r.value} value={r.value}>
-                    {r.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
+            
             <div>
               <label className="text-sm font-bold text-slate-700">
                 Message
@@ -109,6 +83,7 @@ export default function EnquirySection() {
               <textarea
                 rows={5}
                 value={message}
+                name="message"
                 onChange={(e) => setMessage(e.target.value)}
                 className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-green-200"
                 placeholder="How can we help?"
@@ -121,6 +96,7 @@ export default function EnquirySection() {
             >
               Send enquiry
             </button>
+            <span className="text-sm text-slate-600">{result}</span>
           </form>
         </div>
       </div>

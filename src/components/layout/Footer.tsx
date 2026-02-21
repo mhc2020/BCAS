@@ -11,8 +11,8 @@ export default function Footer() {
 
   // Update these later with real info
   const contact = {
-    email: "info@bcas.ca",
-    phone: "+1 (306) 000-0000",
+    email: "admin@bcas.info",
+    phone: "+1 (306) 381-0406",
     location: "Saskatoon, Saskatchewan, Canada",
   };
 
