@@ -1,0 +1,43 @@
+
+name: Deploy BCAS Application
+
+on:
+  push:
+    branches:
+      - main  # Production branch
+
+jobs:
+  deploy-production:
+    name: Deploy to Production
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Deploy to Production Server
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          script: |            
+            # Pull latest code
+            cd /root/BCAS
+            echo "Pulling latest code from main branch"
+            git reset --hard HEAD
+            git clean -fdx
+            git checkout main
+            git pull origin main
+            
+            # Install dependencies and run migrations
+            npm ci
+            
+            # Build application
+            echo "Building application"
+            npm run build
+            
+            # Restart PM2 process
+            echo "Restarting PM2 process: bcas"
+            pm2 reload bcas || pm2 start npm --name "bcas" -- run start
+            
+            # Log deployment completion
+            echo "Production Deployment Completed"
