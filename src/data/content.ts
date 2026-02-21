@@ -26,6 +26,7 @@ export const events = [
     slug: "International Mother Language Day",
     title: "International Mother Language Day",
     date: "February 14th-15th, 2026",
+    time: "5:00 PM",
     location: "Saskatoon",
     description:
       "Join us for the International Mother Language Day celebration with traditional performances of different countries and cultural activities.",
@@ -35,6 +36,7 @@ export const events = [
     slug: "Victory Day Celebration",
     title: "Victory Day Celebration",
     date: "December 28, 2025",
+    time: "6:00 PM",
     location: "Saskatoon",
     description:
       "Observed victory to celebrate the 54th victory day of Bangladesh",
@@ -44,6 +46,7 @@ export const events = [
     slug: "Folkfest",
     title: "Folkfest",
     date: "August 13th-14th, 2025",
+    time: "12:00 PM",
     location: "Saskatoon",
     description:
       "Participated in the yearly folkfest festival organized by city of Saskatoon",

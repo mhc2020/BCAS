@@ -82,7 +82,7 @@ export default function Carousel() {
   };
 
   return (
-    <section className="w-full">
+    <section className="w-full relative z-50">
       <div className="relative w-full overflow-hidden">
         {/* SLIDES TRACK */}
         <div
